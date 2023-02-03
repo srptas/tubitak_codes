@@ -14,7 +14,10 @@
 #include <sstream>
 #include <string>
 #include <cstring>
+#include<sqlite3.h>
 
+
+// tokenize function: to use delimiter for find the number of columns
 void tokenize(std::string const& str, const char* delim,
     std::vector<std::string>& out)
 {
@@ -29,9 +32,11 @@ void tokenize(std::string const& str, const char* delim,
 
 using namespace std;
 
+// some declaretion for sqlite
 ostringstream tablecode, sqlcode;
 string query;
 
+// call back funtion for sqlite
 int callback(void* NotUsed, int argc, char** argv, char** azColName) {
     // Return successful
     return 0;
@@ -39,59 +44,61 @@ int callback(void* NotUsed, int argc, char** argv, char** azColName) {
 
 int main() {
 
-    char chr;
+    char c; // to stop the code
 
     ifstream file;
-    file.open("test1.txt");
+    file.open("test.txt");
 
-    //ifstream file("test1.txt");
-
-    //// count the newlines with an algorithm specialized for counting:
-    //unsigned line_count = std::count(
-    //    std::istream_iterator<char>(file),
-    //    std::istream_iterator<char>(),
-    //    '\n');
-
-    //std::cout << "Lines: " << line_count << "\n";
-
-    string row1 = "";
+    // START CALCULATION OF NUMBER OF ROWS AND COLUMNS
+    string line = "";
     vector<string> array_str;
 
-    int no_of_rows = 0;
-    int no_of_columns = 0;
-
-
-    if (file.is_open()) {
-        while (getline(file, row1)) {
-            array_str.push_back(row1);
-        }
-
-
-        string row_single_string = array_str[1];
-        const char* delim = " ";
-
-        vector<std::string> column_array;
-        tokenize(row_single_string, delim, column_array);
-
-        no_of_rows = array_str.size();
-        no_of_columns = column_array.size();
-    }
-
-    cout << "lines: " << no_of_rows << endl;
-    cout << "columns: " << no_of_columns << endl;
+    int no_of_rows = 0;     // Number of rows
+    int no_of_columns = 0; // Number of columns
 
     
 
+    // Open the file and get lines to array_str named vector
+    if (file.is_open()) {
+        while (getline(file, line)) {
+            array_str.push_back(line);
+            
+            
+        }
+
+        string row_single_string = array_str[1]; // Get any line from array_str vector to calcuate  # of rows and columns
+        const char* delim = "\t"; // delimeter to calculate column number
+
+        vector<std::string> column_array;
+        vector<std::string> title_array;
+        tokenize(row_single_string, delim, column_array);
+        tokenize(array_str[0], delim, title_array);
+
+        no_of_rows = array_str.size(); // lines number = row number
+        no_of_columns = column_array.size(); // column number 
+    }
+
+    for (int i = 0; i < title_array.size(); i++) {
+
+        
+    }
+    // print the results 
+    cout << "lines: " << no_of_rows << endl;
+    cout << "columns: " << no_of_columns << endl;
+
+    // END CALCULATION NUMBER OF ROWS AND COLUMNS
     cout << "**" << endl;
 
 
 
-    int **array_2d = new int* [no_of_rows];
+    // START FOR MATRIX
+    string **array_2d = new string* [no_of_rows];
+
 
     file.clear();
     file.seekg(0, ios::beg);
     for ( int i = 0; i < no_of_rows; ++i) {
-        array_2d[i] = new int[no_of_columns];
+        array_2d[i] = new string[no_of_columns];
 
         for ( int j = 0; j < no_of_columns; ++j) {
             file >> array_2d[i][j];
@@ -100,7 +107,8 @@ int main() {
         std::cout << std::endl;
     }
     
-    cin >> chr;
+    // END FOR MATRIX
+    cin >> c; // ask user a chracter for stop
 
     return 0;
 }
@@ -111,395 +119,3 @@ int main() {
 
 
 
-/*
-int main() {
-
-    sqlite3* db;
-
-    sqlite3_stmt* res;
-    const char* tail;
-
-    // Save any error messages
-    char* zErrMsg = 0;
-
-    // Save the result of opening the file
-    int rc;
-
-
-    // Save the result of opening the file. DB file has opened.
-    rc = sqlite3_open("fromtxt.db", &db);
-
-
-    // Check the Sqlite connection. This, if statement is for unsuccesful connection
-    if (rc) {
-        // Show an error message
-        cout << "DB Error: " << sqlite3_errmsg(db) << endl;
-        // Close the connection
-        sqlite3_close(db);
-        // Return an error
-        return(1);
-    }
-
-
-    tablecode.str("");
-    tablecode << "CREATE TABLE IF NOT EXISTS period0 (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvect1 INT);";
-    query = tablecode.str();
-    rc = sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
-
-
-    // Check if the table is created
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-    else {
-        fprintf(stdout, "Table created successfully\n");
-    }
-
-    vector<double> vecX, vecY, vecZ;
-    double x, y, z;
-
-    ifstream inputFile("test1.txt");
-
-    char c;
-    while (inputFile >> x >> y >> z)
-    {
-        vecX.push_back(x);
-        vecY.push_back(y);
-        vecZ.push_back(z);
-    }
-
-    for (int i(0); i < vecX.size(); i++) {
-        cout << vecX[i] << endl;
-        cin >> c;
-    }
-
-    sqlcode.str("");
-    sqlcode << "INSERT INTO period0 (timeindex, yvect0, yvec1) VALUES(?,?,?);";
-    query = sqlcode.str();
-    rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
-
-    for (int i = 0; i < vecX.size(); i++) {
-
-        if (rc == SQLITE_OK) {
-            sqlite3_bind_int(res, 1, vecX[i]);
-            sqlite3_bind_int(res, 2, vecY[i]);
-            sqlite3_bind_int(res, 3, vecZ[i]);
-            
-
-
-            sqlite3_step(res); // Run the SQL one or more times
-            sqlite3_clear_bindings(res); // CLEAR BINDINGS OF WRITE QUERY
-            sqlite3_reset(res); // Reset the prepared statement
-            //sqlite3_finalize(res); // Don't Destroy the object in a for loop otherwise for loop can not execute following steps in the loop
-            
-        }
-    }
-
-    
-
-    sqlite3_finalize(res); // Destroy prepared statement object
-
-    // Close the SQL connection
-    sqlite3_close(db);
-    
-
-    return 0;
-}
-*/
-
-
-
-
-/*
-int main() {
-
-    char ch;
-   
-    vector<double> col0, col1, col2, col3, col4, col5, col6, col7, col8, col9, col10 ;
-    double a, b, c, d, e, f, g, h, i, j, k;
-
-    ifstream inputFile("1_outputfile_Leadtime3.txt");
-
-    while (inputFile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k)
-    {
-        col0.push_back(a);
-        col1.push_back(b);
-        col2.push_back(c);
-        col3.push_back(d);
-        col4.push_back(e);
-        col5.push_back(f);
-        col6.push_back(g);
-        col7.push_back(h);
-        col8.push_back(i);
-        col9.push_back(j);
-        col10.push_back(k);
-         
-        cout << "Inserting from txt file to vector..." << endl;  
-    }
-    cin >> ch;
-
-    
-
-
-    sqlite3* db;
-
-    sqlite3_stmt* res;
-    const char* tail;
-
-    // Save any error messages
-    char* zErrMsg = 0;
-
-    // Save the result of opening the file
-    int rc;
-
-
-    // Save the result of opening the file. DB file has opened.
-    rc = sqlite3_open("fromtxt.db", &db);
-
-
-    // Check the Sqlite connection. This, if statement is for unsuccesful connection
-    if (rc) {
-        // Show an error message
-        cout << "DB Error: " << sqlite3_errmsg(db) << endl;
-        // Close the connection
-        sqlite3_close(db);
-        // Return an error
-        return(1);
-    }
-
-
-    tablecode.str("");
-    tablecode << "CREATE TABLE IF NOT EXISTS 1_outputfile_Leadtime3 (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvect1 INT, yvect2 INT, yvect3 INT, mvect0 INT, mvect1 INT, optqvect1 INT, optqr INT, optcost REAL, gammacost REAL);";
-    query = tablecode.str();
-    rc = sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
-
-
-    // Check if the table is created
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-    else {
-        fprintf(stdout, "Table created successfully\n");
-    }
-
-    sqlcode.str("");
-    sqlcode << "INSERT INTO 1_outputfile_Leadtime3 (timeindex, yvect0, yvec1, yvec2, yvec3, mvect0, mvec1, optqvect1, optqr, optcost, gammacost) VALUES(?,?,?,?,?,?,?,?,?,?,?);";
-    query = sqlcode.str();
-    rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
-
-    for (int i = 0; col0.size(); i++) {
-
-        if (rc == SQLITE_OK) {
-            sqlite3_bind_int(res, 1, col0[i]);
-            sqlite3_bind_int(res, 2, col1[i]);
-            sqlite3_bind_int(res, 3, col2[i]);
-            sqlite3_bind_int(res, 4, col3[i]);
-            sqlite3_bind_int(res, 5, col4[i]);
-            sqlite3_bind_int(res, 6, col5[i]);
-            sqlite3_bind_int(res, 7, col6[i]);
-            sqlite3_bind_int(res, 8, col7[i]);
-            sqlite3_bind_int(res, 9, col8[i]);
-            sqlite3_bind_double(res, 10, col9[i]);
-            sqlite3_bind_double(res, 11, col10[i]);
-
-
-            sqlite3_step(res); // Run the SQL one or more times
-            sqlite3_clear_bindings(res); // CLEAR BINDINGS OF WRITE QUERY
-            sqlite3_reset(res); // Reset the prepared statement
-            //sqlite3_finalize(res); // Don't Destroy the object in a for loop otherwise for loop can not execute following steps in the loop
-        }
-
-    }
-
-    sqlite3_finalize(res); // Destroy prepared statement object
-
-    // Close the SQL connection
-    sqlite3_close(db);
-
-
-    return 0;
-         
-}
-*/
-
-
-
-
-/*
-int main() {
-
-    std::vector<std::vector<double> > table;
-    std::fstream ifs;
-
-    ifs.open("test.txt");
-
-    while (true) {
-        std::string line;
-        std::getline(ifs, line);
-
-        if (!ifs)
-            break;
-
-        if (line[0] == 'y')
-            continue;
-
-        std::vector<double> row;
-        std::copy(std::istream_iterator<double>(ifs),
-            std::istream_iterator<double>(),
-            std::back_inserter(row));
-
-        table.push_back(row);
-    }
-
-    
-    char c;
-    for (auto row : table) {
-        for (auto el : row) {
-            std::cout << el << ' ';
-        }
-        std::cout << "\n";
-        cin >> c;
-
-    }
-}
-*/
-
-
-/*
-int main() {
-    
-    std::vector<std::vector<int>> v;
-    std::ifstream ifs("test.txt");
-    std::string tempstr;
-    int tempint;
-    char delimiter, c;
-    
-   
-    while (std::getline(ifs, tempstr)) {
-        std::istringstream iss(tempstr);
-        std::vector<int> tempv;
-        while (iss >> tempint) {
-            tempv.push_back(tempint);
-            iss >> delimiter;
-        }
-        v.push_back(tempv);
-    }
-
-    for (auto row : v) {
-        for (auto el : row) {
-            std::cout << el << ' ';
-        }
-        std::cout << "\n";
-        cin >> c;
-        
-    }
-}
-*/
-
-
-/*
-#include <iostream>
-#include <sqlite3.h>
-#include <sstream>
-#include <string>
-#include <fstream>
-using namespace std;
-
-ostringstream tablecode, sqlcode;
-string query;
-
-FILE *file;
-
-
-int callback(void* NotUsed, int argc, char** argv, char** azColName) {
-    // Return successful
-    return 0;
-}
-
-int main()
-{
-    sqlite3* db;
-
-    // Save any error messages
-    char* zErrMsg = 0;
-
-    // Save the result of opening the file
-    int rc;
-
-    
-    // Save the result of opening the file. DB file has opened.
-    rc = sqlite3_open("fromtxt.db", &db);
-
-
-    // Check the Sqlite connection. This, if statement is for unsuccesful connection
-    if (rc) {
-        // Show an error message
-        cout << "DB Error: " << sqlite3_errmsg(db) << endl;
-        // Close the connection
-        sqlite3_close(db);
-        // Return an error
-        return(1);
-    }
-
-   
-    tablecode.str("");
-   
-    tablecode << "CREATE TABLE IF NOT EXISTS 1_outputfile_Leadtime3 (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvect1 INT, yvect2 INT, yvect3 INT, mvect0 INT, mvect1 INT, optqvect1 INT, optqr INT, optcost REAL, gammacost REAL);";
-    query = tablecode.str();
-    rc = sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
-
-
-    //file = fopen("1_outputfile_Leadtime3.txt", "r");
-
-
-    ifstream input;
-    char c;
-    input.open("1_outputfile_Leadtime3.txt");
-
-
-    if (input.is_open()) {//ADDED. LOD INDEX
-        cout << "Parameter file is opened successfully." << endl;
-        cin >> c;
-    }
-    else
-    {
-        cout << "Unable to open the parameter file" << endl;
-        cout << "quitting...";
-        cout << '\a';
-        cin >> c;
-        exit(0);
-    }
-   
-
-    
-    string line;
-    ifstream res("1_outputfile_Leadtime3.txt");
-    while (getline(res, line)) {
-        string sql = "INSERT into 1_outputfile_Leadtime3 (timeindex,yvect0,yvect1,yvect2,yvect3,mvect0,mvect1,optqvect1,optqr,optcost,gammacost) VALUES (" + line + ");";
-       
-        rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
-        if (rc != SQLITE_OK) {
-            cout << "SQL error:" << zErrMsg;
-            sqlite3_free(zErrMsg);
-        }
-    }
-
-    sqlite3_close(db);
-    
-
-
-}
-*/
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
