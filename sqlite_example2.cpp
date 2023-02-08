@@ -134,25 +134,46 @@ int main() {
 
         for (int j = 0; j < no_of_columns; j++) {
             file >> array_2d[i][j];
-            cout << array_2d[i][j] << " ";
+            //cout << array_2d[i][j] << " ";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
     }
     // END FOR MATRIX
 
 
 
-    string s;
+    for (auto& str : title_array) {
+        str.erase(std::remove(str.begin(), str.end(), '['), str.end());
+    }
+    for (auto& str : title_array) {
+        str.erase(std::remove(str.begin(), str.end(), ']'), str.end());
+    }
+    
+    string s1;
+    string s2;
+    string question_marks;
     vector<std::string> column_names;
+    vector<std::string> column_names_bind;
+    vector<std::string> question_marks_array;
     for (int i = 0; i < title_array.size() - 1; i++) {
+        s1 = title_array[i] + " TEXT,";
+        column_names.push_back(s1);
 
-        s = title_array[i] + " TEXT,";
-        column_names.push_back(s);
+        s2 = title_array[i] + ",";
+        column_names_bind.push_back(s2);
+
+        question_marks = "?,";
+        question_marks_array.push_back(question_marks);
+
     }
     int no_of_titles = title_array.size();
-    column_names.push_back(title_array[no_of_titles -1] + " TEXT"); // add last element without comma
-    
+    column_names.push_back(title_array[no_of_titles - 1] + " TEXT"); // add last element without comma
+    column_names_bind.push_back(title_array[no_of_titles - 1]); // add last element without comma
+    question_marks_array.push_back("?");
 
+
+ 
+    /*
     for (auto& s : column_names) {
         for (auto i = s.begin(); i != s.end(); ++i) {
             if (*i == '[' || *i == ']') {
@@ -160,19 +181,31 @@ int main() {
             }
         }
     }
-
     
+
     for (int i = 0; i < column_names.size(); i++) {
         cout << column_names[i] << endl;
     }
-    
+    */
+
+    //cout << "******" << endl;
     std::string column_names_in_string = std::accumulate(column_names.begin(), column_names.end(), std::string(""));
-    cout << column_names_in_string << endl;
+    //cout << column_names_in_string << endl;
+
+    //cout << "******" << endl;
+    std::string column_names_bind_in_string = std::accumulate(column_names_bind.begin(), column_names_bind.end(), std::string(""));
+    //cout << column_names_bind_in_string << endl;
+    //cout << "******" << endl;
+
+    //cout << "******" << endl;
+    std::string question_marks_in_string = std::accumulate(question_marks_array.begin(), question_marks_array.end(), std::string(""));
+    //cout << question_marks_in_string << endl;
+    //cout << "******" << endl;
 
 
     tablecode.str("");
     //AUTOINCREMENT ensures the auto increment of primary key 
-    tablecode << "CREATE TABLE test_table1 (ID INTEGER PRIMARY KEY AUTOINCREMENT," << column_names_in_string <<"); ";
+    tablecode << "CREATE TABLE test_table1 (ID INTEGER PRIMARY KEY AUTOINCREMENT," << column_names_in_string << "); ";
     query = tablecode.str();
     rc = sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
 
@@ -184,7 +217,7 @@ int main() {
 
 
     sqlcode.str("");
-    sqlcode << "INSERT INTO test_table1 (timeindex, yvect0, yvect1, yvect2, yvect3,	mvect0, mvect1, optqvect1, optqr, optcost,	gammacost) VALUES(?,?,?,?,?,?,?,?,?,?,?);";
+    sqlcode << "INSERT INTO test_table1 (" << column_names_bind_in_string << ") VALUES(" << question_marks_in_string << "); ";
     query = sqlcode.str();
     rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
 
