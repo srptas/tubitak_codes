@@ -16,6 +16,7 @@
 #include <cstring>
 #include<sqlite3.h>
 
+#include <numeric>
 
 // tokenize function: to use delimiter for find the number of columns
 void tokenize(std::string const& str, const char* delim,
@@ -99,22 +100,19 @@ int main() {
             array_str.push_back(line);
         }
 
-       
+
         string row_single_string = array_str[1]; // Get any line from array_str vector to calcuate  # of rows and columns
 
         const char* delim = "\t"; // delimeter to calculate column number
 
-       
-      
         tokenize(row_single_string, delim, column_array);
         tokenize(array_str[0], delim, title_array);
-       
+
         no_of_rows = array_str.size(); // lines number = row number
         no_of_columns = column_array.size(); // column number
-        
     }
 
-    
+
 
     // print the results 
     cout << "lines: " << no_of_rows << endl;
@@ -128,7 +126,7 @@ int main() {
     string** array_2d = new string * [no_of_rows];
 
 
-    file.clear(); 
+    file.clear();
     file.seekg(0, ios::beg); // to prevent nonsese numbers
 
     for (int i = 0; i < no_of_rows; i++) {
@@ -142,10 +140,39 @@ int main() {
     }
     // END FOR MATRIX
 
-  
+
+
+    string s;
+    vector<std::string> column_names;
+    for (int i = 0; i < title_array.size() - 1; i++) {
+
+        s = title_array[i] + " TEXT,";
+        column_names.push_back(s);
+    }
+    int no_of_titles = title_array.size();
+    column_names.push_back(title_array[no_of_titles -1] + " TEXT"); // add last element without comma
+    
+
+    for (auto& s : column_names) {
+        for (auto i = s.begin(); i != s.end(); ++i) {
+            if (*i == '[' || *i == ']') {
+                i = s.erase(i);
+            }
+        }
+    }
+
+    
+    for (int i = 0; i < column_names.size(); i++) {
+        cout << column_names[i] << endl;
+    }
+    
+    std::string column_names_in_string = std::accumulate(column_names.begin(), column_names.end(), std::string(""));
+    cout << column_names_in_string << endl;
+
+
     tablecode.str("");
     //AUTOINCREMENT ensures the auto increment of primary key 
-    tablecode << "CREATE TABLE test_table1 (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex TEXT, yvect0 TEXT, yvect1 TEXT, yvect2	TEXT, yvect3 TEXT, mvect0 TEXT, mvect1 TEXT, optqvect1 TEXT, optqr TEXT, optcost TEXT, gammacost TEXT);";
+    tablecode << "CREATE TABLE test_table1 (ID INTEGER PRIMARY KEY AUTOINCREMENT," << column_names_in_string <<"); ";
     query = tablecode.str();
     rc = sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
 
@@ -160,14 +187,14 @@ int main() {
     sqlcode << "INSERT INTO test_table1 (timeindex, yvect0, yvect1, yvect2, yvect3,	mvect0, mvect1, optqvect1, optqr, optcost,	gammacost) VALUES(?,?,?,?,?,?,?,?,?,?,?);";
     query = sqlcode.str();
     rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
-  
+
 
 
     for (int i = 1; i < no_of_rows; i++) {
 
         for (int j = 0; j < no_of_columns; j++) {
 
-            sqlite3_bind_text(res, j+1, array_2d[i][j].c_str(), -1, NULL);
+            sqlite3_bind_text(res, j + 1, array_2d[i][j].c_str(), -1, NULL);
         }
 
         sqlite3_step(res); // Run the SQL one or more times
@@ -177,7 +204,7 @@ int main() {
 
 
     sqlite3_finalize(res); // Destroy the object
-    
+
     sqlite3_close(db);
     cin >> c; // ask user a chracter for stop
 
