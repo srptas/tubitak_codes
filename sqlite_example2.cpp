@@ -16,7 +16,8 @@
 #include <cstring>
 #include<sqlite3.h>
 
-#include <numeric>
+#include <numeric>  // to use accumulate function 
+
 
 // tokenize function: to use delimiter for find the number of columns
 void tokenize(std::string const& str, const char* delim,
@@ -33,10 +34,9 @@ void tokenize(std::string const& str, const char* delim,
 
 using namespace std;
 
-// These are for the sqlite bind SECOND EXAMPLE: 
+// These are for the sqlite bind  
 std::ostringstream tablecode, sqlcode;
 std::string query;
-
 
 
 // call back funtion for sqlite
@@ -81,8 +81,15 @@ int main() {
 
     char c; // to stop the code
 
+
+    string filename;
+
+    cout << "Enter filename for get data to database: " << endl;
+
+    cin >> filename;
+
     ifstream file;
-    file.open("test1.txt");
+    file.open(filename + ".txt");
 
     // START CALCULATION OF NUMBER OF ROWS AND COLUMNS
     string line = "";
@@ -127,7 +134,7 @@ int main() {
 
 
     file.clear();
-    file.seekg(0, ios::beg); // to prevent nonsese numbers
+    file.seekg(0, ios::beg); // to prevent nonsense numbers
 
     for (int i = 0; i < no_of_rows; i++) {
         array_2d[i] = new string[no_of_columns];
@@ -148,7 +155,7 @@ int main() {
     for (auto& str : title_array) {
         str.erase(std::remove(str.begin(), str.end(), ']'), str.end());
     }
-    
+
     string s1;
     string s2;
     string question_marks;
@@ -169,10 +176,10 @@ int main() {
     int no_of_titles = title_array.size();
     column_names.push_back(title_array[no_of_titles - 1] + " TEXT"); // add last element without comma
     column_names_bind.push_back(title_array[no_of_titles - 1]); // add last element without comma
-    question_marks_array.push_back("?");
+    question_marks_array.push_back("?"); // add last element without comma
 
 
- 
+
     /*
     for (auto& s : column_names) {
         for (auto i = s.begin(); i != s.end(); ++i) {
@@ -181,7 +188,7 @@ int main() {
             }
         }
     }
-    
+
 
     for (int i = 0; i < column_names.size(); i++) {
         cout << column_names[i] << endl;
