@@ -75,7 +75,10 @@ int main() {
     }
     // CREATING THE DB FILE END
 
-
+    //DATABASE PARAMETERS FOR FASTER PROCESS.
+    sqlite3_exec(db, "PRAGMA cache_size = 20000", NULL, NULL, &zErrMsg);  //NUMBER OF PAGES IN THE MEMORY
+    sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
+    sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
 
 
     char c;
