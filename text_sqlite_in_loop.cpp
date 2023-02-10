@@ -247,9 +247,8 @@ int main() {
             
         }
 
-
+        sqlite3_finalize(res); // Destroy the object
         cout << file_names_array[i] + " ended." << endl;
-        
     } // END OF FOR LOOP
 
    
