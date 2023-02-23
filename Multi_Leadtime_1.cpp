@@ -118,8 +118,10 @@ int letter2ind(string letters);
 void readparams(int ind, int& param1, int& param2, double& param3, double& param4, double& param5);
 
 
+//CPU TIME CALC. FUNCTION
+void f();
 
-
+void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, int yvect[], int mvect[], int totprintedparts, states* statevect);
 
 //SQLITE
 // For sqlite bind
@@ -133,24 +135,13 @@ int callback(void* NotUsed, int argc, char** argv, char** azColName) {
 	// Return successful
 	return 0;
 }
-//
+//SQLITE
 
 
-//CPU TIME CALC. FUNCTION
-void f()
-{
-	volatile double d = 0;
-	for (int n = 0; n < 10000; ++n)
-		for (int m = 0; m < 10000; ++m) {
-			double diff = d * n * m;
-			d = diff + d;
-		}
-}
 
 //int main()
 int main(int argc, char* argv[])
 {
-
 
 	//TIME IN SECONDS
 	clock_t tStart = clock(); //for the elapsed time
@@ -640,21 +631,6 @@ int main(int argc, char* argv[])
 
 		for (i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++) {
 
-			px = i;
-			calculatestatespace(px, timeindex, maxDmax, LT, v, N, yvect, mvect);
-
-			mvect[0] = N; totprintedparts = 0;
-			//if (yvect[0] + yvect[LT] > maxyupperbound)
-				//	continue;
-
-			for (j = 1; j <= v; j++)
-				totprintedparts += mvect[j];
-
-			if (totprintedparts > N)
-				continue;
-
-			mvect[0] -= totprintedparts;
-
 			if (rc == SQLITE_OK)
 			{
 				//sqlite3_bind_int(res, 1, NULL);
@@ -672,7 +648,6 @@ int main(int argc, char* argv[])
 				sqlite3_step(res);
 				sqlite3_clear_bindings(res);					//CLEAR BINDINGS OF WRITE QUERY
 				sqlite3_reset(res);
-				//cout << "id: " << id;
 
 			}
 		}
@@ -686,15 +661,22 @@ int main(int argc, char* argv[])
 
 
 
+	// THREAD LER BÖYLEYKEN timeindex = 10 DÜZGÜN ÇALIŞIYOR ANCAK WHILE LOOP UN İÇİNDE OLMALILAR join LOOP UN SONUNA EKLENMELİ
+	//thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
+	// thread timeindex-- tan sonra yazıldığında data düzgün gelmiyor ya join ve thread timeindex-- in üstünde olacak ya da thread üstte join 
+	// altta olabilir
 	timeindex--;
-
-
+	//writelastperiod.join(); 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 	//NEXT PERIOD
+	
 	int endindex;
 	while (timeindex >= 1)
 	{
+		thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
+	
 		std::cout << "Period " << timeindex << " starts!" << endl;
 		if (timeindex == 1)
 			endindex = 0;
@@ -870,28 +852,8 @@ int main(int argc, char* argv[])
 			rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
 
 
-			if (timeindex == 1)
-				endindex = 0;
-			if (timeindex > 1)
-				endindex = initialstateindex[timeindex - 2];
-
-
 			for (i = 0; i < initialstateindex[timeindex - 1] - endindex; i++) {
 
-				px = i;
-				calculatestatespace(px, timeindex, maxDmax, LT, v, N, yvect, mvect);
-
-
-				mvect[0] = N; totprintedparts = 0;
-				//			if (yvect[0] + yvect[LT] > maxyupperbound)
-				//				continue;
-				for (j = 1; j <= v; j++)
-					totprintedparts += mvect[j];
-
-				//			if (totprintedparts > N)
-				//				continue;
-
-				mvect[0] -= totprintedparts;
 
 				if (rc == SQLITE_OK)
 				{
@@ -919,9 +881,10 @@ int main(int argc, char* argv[])
 			std::cout << "Period " << timeindex << " is complete! Inserting to the Database starts!" << endl;
 		}
 		*/
-
+		writelastperiod.join(); //while loop sonunda join
 		timeindex--;
 	}
+	
 
 	// Close SQLITE connection
 	//sqlite3_close(db);
@@ -934,8 +897,6 @@ int main(int argc, char* argv[])
 	resultfile.close();
 
 
-
-
 	delete[] statevect;
 	delete[] statevectnextper;
 	//return 0;
@@ -944,7 +905,6 @@ int main(int argc, char* argv[])
 	clock_t c_end = clock();
 
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC); //elapsed time
-
 
 
 	auto t_end = chrono::high_resolution_clock::now();
@@ -966,10 +926,6 @@ int main(int argc, char* argv[])
 	return 0;
 
 }
-
-
-
-
 
 
 double calculateprobvect(int v, int mvect[], double pvect[], double probvect[], int distsupport)
@@ -1336,10 +1292,22 @@ void readparams(int ind, int& param1, int& param2, double& param3, double& param
 }
 
 
+//CPU TIME CALC. FUNCTION
+void f()
+{
+	volatile double d = 0;
+	for (int n = 0; n < 10000; ++n)
+		for (int m = 0; m < 10000; ++m) {
+			double diff = d * n * m;
+			d = diff + d;
+		}
+}
 
 
 
-void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, int yvect[], int mvect[], int totprintedparts, states* statevect, states* statevectnextper, int endindex) {
+
+
+void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, int yvect[], int mvect[], int totprintedparts, states* statevect) {
 	// SQLITE INITIALIZE START
 	// Pointer to SQLite connection
 	sqlite3* db;
@@ -1369,11 +1337,11 @@ void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, 
 	}
 	//SQLITE INITIALIZE END
 
+
 	//DATABASE PARAMETERS FOR FASTER PROCESS.
 	sqlite3_exec(db, "PRAGMA cache_size = 20000", NULL, NULL, &zErrMsg);  //NUMBER OF PAGES IN THE MEMORY
 	sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
 	sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
-
 
 
 	string table_name = "Leadtime1_" + indexx;
@@ -1419,22 +1387,7 @@ void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, 
 		// FOR THE LAST PERIOD
 		for (int i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++) {
 
-			px = i;
-			calculatestatespace(px, timeindex, maxDmax, LT, v, N, yvect, mvect);
-
-			mvect[0] = N; 
-			totprintedparts = 0;
-			//if (yvect[0] + yvect[LT] > maxyupperbound)
-				//	continue;
-
-			for (int j = 1; j <= v; j++)
-				totprintedparts += mvect[j];
-
-			if (totprintedparts > N)
-				continue;
-
-			mvect[0] -= totprintedparts;
-
+		
 			if (rc == SQLITE_OK)
 			{
 
@@ -1460,6 +1413,7 @@ void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, 
 		std::cout << "Period " << timeindex << " is complete! Inserting to the Database starts!" << endl;
 
 	}
+
 
 	sqlite3_close(db);
 }
