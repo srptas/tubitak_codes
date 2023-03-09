@@ -1,4 +1,4 @@
-ï»¿#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <math.h>
 #include <conio.h>
@@ -21,10 +21,10 @@
 #include<Windows.h>
 #include <thread>
 #include<process.h>
-#include "C:\Users\khas\source\repos\boncuk.h"
-// V=4, Revised Melisa TuÄŸcu - 18.11.2022
+#include "C:\Users\Serap\source\repos\boncuk.h"
+// V=4, Revised Melisa Tuðcu - 18.11.2022
 
-// REVISED WITH SQLITE AND MULTITHREADING
+// REVISED WITH SQLITE AND MULTITHREADING - Serap Taþ
 #include <sqlite3.h>
 
 using namespace std;
@@ -117,7 +117,7 @@ return 0;
 int letter2ind(string letters);
 void readparams(int ind, int& param1, int& param2, double& param3, double& param4, double& param5);
 
-
+void static writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[horizon + 1], int timeindex, states* statevect);
 
 //SQLITE
 // For sqlite bind
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
 
 	// CREATE TABLE ACCORDING TO INDEXX
 	tablecode.str("");
-	tablecode << "CREATE TABLE Leadtime1_" << indexx << " (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvect1 INT, yvect2 INT, yvect3 INT, mvect0 INT, mvect1 INT, optqpvect1 INT, optqr INT, optcost REAL, gammacost REAL);";
+	tablecode << "CREATE TABLE Leadtime1_" << indexx << " (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvect1 INT, yvect2 INT, yvect3 INT, mvect0 INT, mvect1 INT, optqvect1 INT, optqr INT, optcost REAL, gammacost REAL);";
 	query = tablecode.str();
 	sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
 
@@ -213,8 +213,8 @@ int main(int argc, char* argv[])
 	long double prob0, prob1, probmult;
 
 	float mu = 0.8, sigma = 1, epsilon = 0.001;
-	int timeindex = horizon; //DEÄžÄ°ÅžÄ°M 18.11
-	unsigned long long initialstateindex[horizon + 1]; //DEÄžÄ°ÅžÄ°M 18.11
+	int timeindex = horizon; //DEÐÝÞÝM 18.11
+	unsigned long long initialstateindex[horizon + 1]; //DEÐÝÞÝM 18.11
 	int yvect[LT + 1];
 	int yvectnew[LT + 1];
 	int mvect[v + 1];
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
 	double cr = 100;
 	//double cp0 = 40;
 	// double alpha= 0.426, r= 0.15, s= -0.00001254;
-	//ptilde vect hesaplanÄ±rken kullanÄ±lÄ±yor
+	//ptilde vect hesaplanýrken kullanýlýyor
 	double alpha = 3, r = 0.01, s = -0.00001;
 	ptildevect[0] = 0.1;
 	ptildevect[1] = ptildevect[0] * ptilP_;
@@ -392,13 +392,13 @@ int main(int argc, char* argv[])
 
 		}
 	}
-	//BURADA STATESPACE I DOÄžRU HESAPLADIÄžINI TEST ETTÄ°M Ã‡ALIÅžIYOR!!!!!!!!!!
+	//BURADA STATESPACE I DOÐRU HESAPLADIÐINI TEST ETTÝM ÇALIÞIYOR!!!!!!!!!!
 
 	/* yvect[0] = 1; yvect[1] = 2;
 	mvect[0] = 1; mvect[1] = 2;
 	int aaa= calculateindex(yvect, mvect, LT, v, N + 1, maxyupperbound);
 	cout << yvect[0]<<"   "<< yvect[1] << "   " << "index number    "<<aaa << endl;
-	/* BURADA INDEX I DOÄžRU HESAPLADIÄžINI TEST ETTÄ°M Ã‡ALIÅžIYOR!!!!!! */
+	/* BURADA INDEX I DOÐRU HESAPLADIÐINI TEST ETTÝM ÇALIÞIYOR!!!!!! */
 
 
 	//outputsub.open("outputsubfile.txt");
@@ -438,12 +438,12 @@ int main(int argc, char* argv[])
 		mvect[0] -= totprintedparts;
 
 
-		optqr = N;  // burasÄ± 10 du N yaptÄ±k
+		optqr = N;  // burasý 10 du N yaptýk
 		optqvect[0] = 0;
 		opttotcost = M;
 
 
-		for (qr = 0; qr <= maxyupperbound; qr++)  // qr search baÅŸlangÄ±cÄ±
+		for (qr = 0; qr <= maxyupperbound; qr++)  // qr search baþlangýcý
 		{
 			gammacost = 0;
 
@@ -746,6 +746,9 @@ int main(int argc, char* argv[])
 
 		}
 		//cin >> c;
+
+		thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex[horizon + 1], timeindex + 1, statevect);
+		writetoDBthread.join();
 
 		//std::cout << "Period " << timeindex << " is complete! Writing Starts!" << endl;
 		// outputfile.open("output.txt", std::ofstream::out | std::ofstream::app);
@@ -1214,7 +1217,7 @@ void readparams(int ind, int& param1, int& param2, double& param3, double& param
 
 
 
-void writetoDB() {
+void static writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[horizon + 1], int timeindex, states* statevect) {
 
 	// For binding
 	sqlite3_stmt* res;
@@ -1223,31 +1226,33 @@ void writetoDB() {
 	//SQLITE BIND START
 	if (sqlite3_open("database.db", &db) == SQLITE_OK)
 	{
-
 		//PREPARE SQLCODE. LATER WE BIND THEM WITH PARAMETERS TO BE REPLACED QUESTION MARKS
 		sqlcode.str("");
-		sqlcode << "INSERT INTO Leadtime1_" << indexx << " (timeindex, yvect0, yvectLT, mvect0, mvect1, optqr, optqvect0, optcost, gammacost) VALUES(?,?,?,?,?,?,?,?,?);";
+		sqlcode << "INSERT INTO Leadtime1_" << indexx << " (timeindex, yvect0, yvect1, yvect2, yvect3, mvect0, mvect1, optqvect1, optqr, optcost, gammacost) VALUES(?,?,?,?,?,?,?,?,?,?,?);";
 		query = sqlcode.str();
 		rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
-
 
 
 		// FOR THE LAST PERIOD
 		for (int i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++) {
 
-
 			if (rc == SQLITE_OK)
 			{
 
+				//outputfile << setprecision(30) << statevect[i].per << "\t" << statevect[i].yvect[0] << "\t" << statevect[i].yvect[1] << "\t" << statevect[i].yvect[2] << "\t" 
+				//<< statevect[i].yvect[3] << "\t" << statevect[i].mvect[0] << "\t" << statevect[i].mvect[1] << "\t" << statevect[i].optqpvect[0] << "\t" << statevect[i].optqr << 
+				//"\t" << statevect[i].optcost << "\t" << statevect[i].gammacost << endl;
 				sqlite3_bind_int(res, 1, statevect[i].per);
 				sqlite3_bind_int(res, 2, statevect[i].yvect[0]);
 				sqlite3_bind_int(res, 3, statevect[i].yvect[1]);
-				sqlite3_bind_int(res, 4, statevect[i].mvect[0]);
-				sqlite3_bind_int(res, 5, statevect[i].mvect[1]);
-				sqlite3_bind_int(res, 6, statevect[i].optqr);
-				sqlite3_bind_int(res, 7, statevect[i].optqpvect[0]);
-				sqlite3_bind_double(res, 8, statevect[i].optcost);
-				sqlite3_bind_double(res, 9, statevect[i].gammacost);
+				sqlite3_bind_int(res, 4, statevect[i].yvect[2]);
+				sqlite3_bind_int(res, 5, statevect[i].yvect[3]);
+				sqlite3_bind_int(res, 6, statevect[i].mvect[0]);
+				sqlite3_bind_int(res, 7, statevect[i].mvect[1]);
+				sqlite3_bind_int(res, 8, statevect[i].optqpvect[0]);
+				sqlite3_bind_double(res, 9, statevect[i].optqr);
+				sqlite3_bind_double(res, 10, statevect[i].optcost);
+				sqlite3_bind_double(res, 11, statevect[i].gammacost);
 
 
 				sqlite3_step(res);
@@ -1262,17 +1267,16 @@ void writetoDB() {
 
 	}
 
-
 	sqlite3_close(db);
 }
 
-// ProgramÄ± Ã§alÄ±ÅŸtÄ±r: Ctrl + F5 veya Hata AyÄ±kla > Hata AyÄ±klamadan BaÅŸlat menÃ¼sÃ¼
-// Programda hata ayÄ±kla: F5 veya Hata AyÄ±kla > Hata AyÄ±klamayÄ± BaÅŸlat menÃ¼sÃ¼
+// Programý çalýþtýr: Ctrl + F5 veya Hata Ayýkla > Hata Ayýklamadan Baþlat menüsü
+// Programda hata ayýkla: F5 veya Hata Ayýkla > Hata Ayýklamayý Baþlat menüsü
 
-// Kullanmaya BaÅŸlama Ä°puÃ§larÄ±:
-//   1. DosyalarÄ± eklemek/yÃ¶netmek iÃ§in Ã‡Ã¶zÃ¼m Gezgini penceresini kullanÄ±n
-//   2. Kaynak denetimine baÄŸlanmak iÃ§in TakÄ±m Gezgini penceresini kullanÄ±n
-//   3. Derleme Ã§Ä±ktÄ±sÄ±nÄ± ve diÄŸer iletileri gÃ¶rmek iÃ§in Ã‡Ä±ktÄ± penceresini kullanÄ±n
-//   4. HatalarÄ± gÃ¶rÃ¼ntÃ¼lemek iÃ§in Hata Listesi penceresini kullanÄ±n
-//   5. Yeni kod dosyalarÄ± oluÅŸturmak iÃ§in Projeye Git > Yeni Ã–ÄŸe ekle veya varolan kod dosyalarÄ±nÄ± projeye eklemek iÃ§in Proje > Var Olan Ã–ÄŸeyi Ekle adÄ±mlarÄ±nÄ± izleyin
-//   6. Bu projeyi daha sonra yeniden aÃ§mak iÃ§in Dosya > AÃ§ > Proje'ye gidip .sln uzantÄ±lÄ± dosyayÄ± seÃ§in
+// Kullanmaya Baþlama Ýpuçlarý:
+//   1. Dosyalarý eklemek/yönetmek için Çözüm Gezgini penceresini kullanýn
+//   2. Kaynak denetimine baðlanmak için Takým Gezgini penceresini kullanýn
+//   3. Derleme çýktýsýný ve diðer iletileri görmek için Çýktý penceresini kullanýn
+//   4. Hatalarý görüntülemek için Hata Listesi penceresini kullanýn
+//   5. Yeni kod dosyalarý oluþturmak için Projeye Git > Yeni Öðe ekle veya varolan kod dosyalarýný projeye eklemek için Proje > Var Olan Öðeyi Ekle adýmlarýný izleyin
+//   6. Bu projeyi daha sonra yeniden açmak için Dosya > Aç > Proje'ye gidip .sln uzantýlý dosyayý seçin
