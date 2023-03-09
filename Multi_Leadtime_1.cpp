@@ -121,7 +121,8 @@ void readparams(int ind, int& param1, int& param2, double& param3, double& param
 //CPU TIME CALC. FUNCTION
 void f();
 
-void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, int yvect[], int mvect[], int totprintedparts, states* statevect);
+//WRITE TO DB
+void writetoDB(sqlite3* db, int rc, int indexx, int initialstateindex[], int timeindex, states* statevect);
 
 //SQLITE
 // For sqlite bind
@@ -157,15 +158,9 @@ int main(int argc, char* argv[])
 	//
 
 
-
-	/*
 	// SQLITE INITIALIZE START
 	// Pointer to SQLite connection
 	sqlite3* db;
-
-	// For binding
-	sqlite3_stmt* res;
-	const char* tail;
 
 	// Save any error messages
 	char* zErrMsg = 0;
@@ -193,7 +188,7 @@ int main(int argc, char* argv[])
 	sqlite3_exec(db, "PRAGMA cache_size = 20000", NULL, NULL, &zErrMsg);  //NUMBER OF PAGES IN THE MEMORY
 	sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
 	sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
-	*/
+	
 
 	cout << "=======================================NEW RUN====================================================================\n\n" << endl;
 	//!!!!!!!!!!! //int indexx = letter2ind(argv[1]);
@@ -207,14 +202,16 @@ int main(int argc, char* argv[])
 	//holdingrate, ptil/p, cr/cp,distruption type,N
 
 
+	//string table_name = "Leadtime1_" + indexx;
+	//int check_repetition = sqlite3_table_column_metadata(db, NULL, table_name.c_str(), NULL, NULL, NULL, NULL, NULL, NULL);
 
-	/*
+
 	// CREATE TABLE ACCORDING TO INDEXX
 	tablecode.str("");
 	tablecode << "CREATE TABLE Leadtime1_" << indexx << " (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvectLT INT, mvect0 INT, mvect1 INT, optqr INT, optqvect0 INT, optcost REAL, gammacost REAL);";
 	query = tablecode.str();
 	sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
-	
+
 
 	// Run the SQL (convert the string to a C-String with c_str() )
 	rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
@@ -228,10 +225,6 @@ int main(int argc, char* argv[])
 	else {
 		fprintf(stdout, "Table created successfully!\n");
 	}
-
-	*/
-
-
 
 
 	int i = 0, j, jj;
@@ -291,6 +284,7 @@ int main(int argc, char* argv[])
 	int statesize = initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2];  //pow((double)N + 1, v)*pow(N + 1, (LT + 1));
 	int statesize2 = initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2];
 
+	// initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2];
 
 	cout << "Total State Size Per Period is: " << statesize << endl;
 
@@ -555,9 +549,6 @@ int main(int argc, char* argv[])
 		}
 
 
-
-
-
 		statevect[i].optqr = optqr;
 		statevect[i].optcost = opttotcost;
 		statevect[i].per = timeindex;
@@ -659,14 +650,8 @@ int main(int argc, char* argv[])
 	//SQLITE BIND END
 	*/
 
-
-
-	// THREAD LER BÖYLEYKEN timeindex = 10 DÜZGÜN ÇALIŞIYOR ANCAK WHILE LOOP UN İÇİNDE OLMALILAR join LOOP UN SONUNA EKLENMELİ
-	//thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
-	// thread timeindex-- tan sonra yazıldığında data düzgün gelmiyor ya join ve thread timeindex-- in üstünde olacak ya da thread üstte join 
-	// altta olabilir
 	timeindex--;
-	//writelastperiod.join(); 
+	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -675,8 +660,6 @@ int main(int argc, char* argv[])
 	int endindex;
 	while (timeindex >= 1)
 	{
-		thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
-	
 		std::cout << "Period " << timeindex << " starts!" << endl;
 		if (timeindex == 1)
 			endindex = 0;
@@ -803,6 +786,15 @@ int main(int argc, char* argv[])
 		// outputfile.open(filename1, std::ofstream::out | std::ofstream::app);
 
 
+
+		
+		thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex+1, statevect);
+		// join initialstateindex[timeindex - 2]
+		writetoDBthread.join();
+
+		
+
+
 		if (timeindex == 1)
 			endindex = 0;
 		if (timeindex > 1)
@@ -841,6 +833,7 @@ int main(int argc, char* argv[])
 		}
 		// outputfile.close();
 
+		
 
 		/*
 		if (sqlite3_open("database.db", &db) == SQLITE_OK)
@@ -854,10 +847,8 @@ int main(int argc, char* argv[])
 
 			for (i = 0; i < initialstateindex[timeindex - 1] - endindex; i++) {
 
-
 				if (rc == SQLITE_OK)
 				{
-					//sqlite3_bind_int(res, 1, NULL);
 					sqlite3_bind_int(res, 1, statevectnextper[i].per);
 					sqlite3_bind_int(res, 2, statevectnextper[i].yvect[0]);
 					sqlite3_bind_int(res, 3, statevectnextper[i].yvect[1]);
@@ -881,10 +872,26 @@ int main(int argc, char* argv[])
 			std::cout << "Period " << timeindex << " is complete! Inserting to the Database starts!" << endl;
 		}
 		*/
-		writelastperiod.join(); //while loop sonunda join
+
+
+		/*
+		if (timeindex < horizon)
+		{
+			std::cout << "Waiting for previous period's database thread" << std::endl;
+			threads.at(timeindex).join();
+		}
+		*/
+		//threads.at(timeindex - 1) = std::thread(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
+		//thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
+		
+		//thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, statevect);
+		
+
 		timeindex--;
 	}
-	
+	//threads.at(0).join();
+	//writelastperiod.join();
+
 
 	// Close SQLITE connection
 	//sqlite3_close(db);
@@ -1221,14 +1228,11 @@ void readparams(int ind, int& param1, int& param2, double& param3, double& param
 	int trial, i, j; char c;
 	double param[6];
 
-
 	double temp;
-
 
 	ifstream input;
 
 	input.open("params.txt");
-
 
 	if (input.is_open()) //ADDED. LOD INDEX
 		cout << "Parameter file is opened successfully." << endl;
@@ -1304,74 +1308,14 @@ void f()
 }
 
 
-
-
-
-void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, int yvect[], int mvect[], int totprintedparts, states* statevect) {
-	// SQLITE INITIALIZE START
-	// Pointer to SQLite connection
-	sqlite3* db;
-
+void writetoDB(sqlite3* db, int rc, int indexx, int initialstateindex[], int timeindex, states* statevect) {
+	
 	// For binding
 	sqlite3_stmt* res;
 	const char* tail;
 
-	// Save any error messages
-	char* zErrMsg = 0;
-
-	// Save the result of opening the file
-	int rc;
-
-	// Save any SQL
-	string sql;
-
-	// Save the result of opening the file
-	rc = sqlite3_open("database.db", &db);
-
-	if (rc) {
-		// Show an error message
-		cout << "DB Error: " << sqlite3_errmsg(db) << endl;
-		// Close the connection
-		sqlite3_close(db);
-		
-	}
-	//SQLITE INITIALIZE END
-
-
-	//DATABASE PARAMETERS FOR FASTER PROCESS.
-	sqlite3_exec(db, "PRAGMA cache_size = 20000", NULL, NULL, &zErrMsg);  //NUMBER OF PAGES IN THE MEMORY
-	sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &zErrMsg);
-	sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &zErrMsg);
-
-
-	string table_name = "Leadtime1_" + indexx;
-	int check_repetition = sqlite3_table_column_metadata(db, NULL, table_name.c_str(), NULL, NULL, NULL, NULL, NULL, NULL);
-
-
-	
-	// CREATE TABLE ACCORDING TO INDEXX
-	tablecode.str("");
-	tablecode << "CREATE TABLE Leadtime1_" << indexx << " (ID INTEGER PRIMARY KEY AUTOINCREMENT, timeindex INT, yvect0 INT, yvectLT INT, mvect0 INT, mvect1 INT, optqr INT, optqvect0 INT, optcost REAL, gammacost REAL);";
-	query = tablecode.str();
-	sqlite3_exec(db, query.c_str(), callback, 0, &zErrMsg);
-
-
-	// Run the SQL (convert the string to a C-String with c_str() )
-	rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
-
-
-	// Check if the table is created
-	if (rc != SQLITE_OK) {
-		fprintf(stderr, "SQL error: %s\n", zErrMsg);
-		sqlite3_free(zErrMsg);
-	}
-	else {
-		fprintf(stdout, "Table created successfully!\n");
-	}
-
 
 	//SQLITE BIND START
-
 	if (sqlite3_open("database.db", &db) == SQLITE_OK)
 	{
 
@@ -1383,11 +1327,11 @@ void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, 
 		rc = sqlite3_prepare_v2(db, query.c_str(), query.length(), &res, &tail);
 
 
-		
+
 		// FOR THE LAST PERIOD
 		for (int i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++) {
 
-		
+
 			if (rc == SQLITE_OK)
 			{
 
@@ -1416,4 +1360,6 @@ void writetoDB(int indexx, int initialstateindex[], int timeindex, int maxDmax, 
 
 
 	sqlite3_close(db);
+	
+
 }
