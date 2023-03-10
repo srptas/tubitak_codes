@@ -786,14 +786,9 @@ int main(int argc, char* argv[])
 		// outputfile.open(filename1, std::ofstream::out | std::ofstream::app);
 
 
-
-		
 		thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex+1, statevect);
 		// join initialstateindex[timeindex - 2]
 		writetoDBthread.join();
-
-		
-
 
 		if (timeindex == 1)
 			endindex = 0;
@@ -889,6 +884,9 @@ int main(int argc, char* argv[])
 
 		timeindex--;
 	}
+	thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex + 1, statevect);
+	writetoDBthread.join();
+
 	//threads.at(0).join();
 	//writelastperiod.join();
 
@@ -1313,12 +1311,11 @@ void writetoDB(sqlite3* db, int rc, int indexx, int initialstateindex[], int tim
 	// For binding
 	sqlite3_stmt* res;
 	const char* tail;
-
+	int endindex, i;
 
 	//SQLITE BIND START
 	if (sqlite3_open("database.db", &db) == SQLITE_OK)
 	{
-
 
 		//PREPARE SQLCODE. LATER WE BIND THEM WITH PARAMETERS TO BE REPLACED QUESTION MARKS
 		sqlcode.str("");
@@ -1329,7 +1326,11 @@ void writetoDB(sqlite3* db, int rc, int indexx, int initialstateindex[], int tim
 
 
 		// FOR THE LAST PERIOD
-		for (int i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++) {
+		if (timeindex == 1)
+			endindex = 0;
+		if (timeindex > 1)
+			endindex = initialstateindex[timeindex - 2];
+		for (i = 0; i < initialstateindex[timeindex - 1] - endindex; i++) {
 
 
 			if (rc == SQLITE_OK)
