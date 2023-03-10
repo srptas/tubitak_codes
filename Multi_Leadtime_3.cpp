@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+ï»¿#define _CRT_SECURE_NO_WARNINGS
 
 #include <math.h>
 #include <conio.h>
@@ -21,10 +21,11 @@
 #include<Windows.h>
 #include <thread>
 #include<process.h>
-#include "C:\Users\Serap\source\repos\boncuk.h"
-// V=4, Revised Melisa Tuðcu - 18.11.2022
+//#include "C:\Users\Serap\source\repos\boncuk.h"
+#include "C:\Users\khas\source\repos\boncuk.h"
+// V=4, Revised Melisa Tuï¿½cu - 18.11.2022
 
-// REVISED WITH SQLITE AND MULTITHREADING - Serap Taþ
+// REVISED WITH SQLITE AND MULTITHREADING - Serap Taï¿½
 #include <sqlite3.h>
 
 using namespace std;
@@ -76,7 +77,7 @@ const char* tail;
 char* zErrMsg = 0;
 
 bool testflg = FALSE;
-const int horizon = 100;
+const int horizon = 4;
 unsigned long long px;
 long double gammafunccost;
 
@@ -117,7 +118,7 @@ return 0;
 int letter2ind(string letters);
 void readparams(int ind, int& param1, int& param2, double& param3, double& param4, double& param5);
 
-void static writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[horizon + 1], int timeindex, states* statevect);
+void writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[], int timeindex, states* statevect);
 
 //SQLITE
 // For sqlite bind
@@ -213,8 +214,8 @@ int main(int argc, char* argv[])
 	long double prob0, prob1, probmult;
 
 	float mu = 0.8, sigma = 1, epsilon = 0.001;
-	int timeindex = horizon; //DEÐÝÞÝM 18.11
-	unsigned long long initialstateindex[horizon + 1]; //DEÐÝÞÝM 18.11
+	int timeindex = horizon; //DEï¿½ï¿½ï¿½ï¿½M 18.11
+	unsigned long long initialstateindex[horizon + 1]; //DEï¿½ï¿½ï¿½ï¿½M 18.11
 	int yvect[LT + 1];
 	int yvectnew[LT + 1];
 	int mvect[v + 1];
@@ -226,7 +227,7 @@ int main(int argc, char* argv[])
 	double cr = 100;
 	//double cp0 = 40;
 	// double alpha= 0.426, r= 0.15, s= -0.00001254;
-	//ptilde vect hesaplanýrken kullanýlýyor
+	//ptilde vect hesaplanï¿½rken kullanï¿½lï¿½yor
 	double alpha = 3, r = 0.01, s = -0.00001;
 	ptildevect[0] = 0.1;
 	ptildevect[1] = ptildevect[0] * ptilP_;
@@ -331,27 +332,7 @@ int main(int argc, char* argv[])
 	cout << "Failure Rates: \t\t p.org=" << ptildevect[0] << " p.1=" << ptildevect[1] << endl;
 	cout << "Acquisition Costs: \t cr=" << cr << " cp0=" << cpvect[0] << endl;
 
-	/*if (v == 1)
-	{
-		mvect[1] = 1;
-		mvect[0] = N;
-		for (i = 0; i < v; i++)
-		{
-			mvect[0] -= mvect[i + 1];
-			// cout << mvect[0] << "    " << mvect[1] << endl;
-		}
-	}*/
-
-	//!!!!!!!!!
-	/*time_t timer;
-	struct tm* timeinfo;
-	time(&timer);
-	timeinfo = localtime(&timer);*/
-
-
-
-	//int y = 1;
-
+	
 
 	ofstream outputfile, outputsub, resultfile, logfile, resultfile0, errorfile;
 	// logfile.open("Logfile.txt", std::ofstream::out | std::ofstream::app);
@@ -366,7 +347,7 @@ int main(int argc, char* argv[])
 
 	ofstream testfile;
 	testflg = true;
-	if (testflg)
+	/*if (testflg)
 	{
 		testfile.open("filetest.txt", std::ofstream::out | std::ofstream::app);
 		//testfile << "i" << "\t" << "timeindex" << "\t" << "yvect[0]" << "\t" << "yvect[1]" << "\t" << "yvect[2]" << "\t" << "yvect[3]" << "\t" << "mvect[0]" << "\t" << "mvect[1]" << "\t" << "optqr" << "\t" << "optcost" << "\t" << "gammacost" << endl;
@@ -392,13 +373,13 @@ int main(int argc, char* argv[])
 
 		}
 	}
-	//BURADA STATESPACE I DOÐRU HESAPLADIÐINI TEST ETTÝM ÇALIÞIYOR!!!!!!!!!!
+	//BURADA STATESPACE I DOï¿½RU HESAPLADIï¿½INI TEST ETTï¿½M ï¿½ALIï¿½IYOR!!!!!!!!!!
 
 	/* yvect[0] = 1; yvect[1] = 2;
 	mvect[0] = 1; mvect[1] = 2;
 	int aaa= calculateindex(yvect, mvect, LT, v, N + 1, maxyupperbound);
 	cout << yvect[0]<<"   "<< yvect[1] << "   " << "index number    "<<aaa << endl;
-	/* BURADA INDEX I DOÐRU HESAPLADIÐINI TEST ETTÝM ÇALIÞIYOR!!!!!! */
+	/* BURADA INDEX I DOï¿½RU HESAPLADIï¿½INI TEST ETTï¿½M ï¿½ALIï¿½IYOR!!!!!! */
 
 
 	//outputsub.open("outputsubfile.txt");
@@ -424,9 +405,6 @@ int main(int argc, char* argv[])
 		totprintedparts = 0;
 		totprintedpartsafterchange = 0;
 
-		//if (yvect[0] + yvect[1] + yvect[2] + yvect[3] > maxyupperbound)
-		//	continue;
-
 		for (j = 1; j <= v; j++)
 			totprintedparts += mvect[j];
 
@@ -438,12 +416,12 @@ int main(int argc, char* argv[])
 		mvect[0] -= totprintedparts;
 
 
-		optqr = N;  // burasý 10 du N yaptýk
+		optqr = N;  // burasï¿½ 10 du N yaptï¿½k
 		optqvect[0] = 0;
 		opttotcost = M;
 
 
-		for (qr = 0; qr <= maxyupperbound; qr++)  // qr search baþlangýcý
+		for (qr = 0; qr <= maxDmax; qr++)  // qr search baï¿½langï¿½cï¿½
 		{
 			gammacost = 0;
 
@@ -459,15 +437,12 @@ int main(int argc, char* argv[])
 			for (d = 0; d <= mvect[0]; d++)
 			{
 				prob0 = binompdf2(d, mvect[0], ptildevect[0]);
-				// cout << setprecision(30)<<prob0 << endl;
-				// cin >> c;
+
 				for (d1 = 0; d1 <= mvect[1]; d1++)
 				{
 					prob1 = binompdf2(d1, mvect[1], ptildevect[1]);
 
 					probmult = prob0 * prob1;
-
-					//					cout << "d: " << d << " d1: " << d1 << " prob0: " << prob0 << " prob1: " << prob1 << "probmult: " << probmult << endl;
 
 
 					totaldemand = d + d1;
@@ -489,28 +464,6 @@ int main(int argc, char* argv[])
 					costpergamma += hold * maxoftwo(0, y_inv_oh - totaldemand);
 					costpergamma += backlog * maxoftwo(0, totaldemand - y_inv_oh - qpvect[0]);
 
-					//		hc = hold * maxoftwo(0, y.inv.oh - totaldemand);
-					//		bc = backlog * maxoftwo(0, totaldemand - y.inv.oh - qpvect[0]);
-
-		/*
-							if (costper < optcost)  // REMOVE
-							{
-								optqvect[0] = qpvect[0];
-								optcost = costper;
-							}
-
-							if (qr == 0)  // REMOVE
-							{
-								if (costpergamma < optcostgamma)
-								{
-									optqvectgamma[0] = qpvect[0];
-									optcostgamma = costpergamma;
-								}
-							}
-
-							pr = prob0; ps = prob1;     // REMOVE
-		*/
-
 
 
 					totcost += costper * probmult;
@@ -518,9 +471,6 @@ int main(int argc, char* argv[])
 
 				} //CONDITIONAL PROBABILITY
 			} //CONDITIONAL PROBABILITY
-
-
-//			cout <<"qr="<< qr << " d1-d2= (" << d << " " << d1 << ").  Total_gamma_cost= " << totcostgamma << " Total cost = " << totcost << endl;
 
 
 
@@ -588,7 +538,7 @@ int main(int argc, char* argv[])
 
 
 
-	for (i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++)
+	/*for (i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++)
 	{
 		px = i;
 		calculatestatespace_lt(px, timeindex, maxDmax, LT, v, N, yvect, mvect);
@@ -606,14 +556,14 @@ int main(int argc, char* argv[])
 		mvect[0] -= totprintedparts;
 
 		//outputfile << setprecision(30) << statevect[i].per << "\t" << statevect[i].yvect[0] << "\t" << statevect[i].yvect[1] << "\t" << statevect[i].yvect[2] << "\t" << statevect[i].yvect[3] << "\t" << statevect[i].mvect[0] << "\t" << statevect[i].mvect[1] << "\t" << statevect[i].optqpvect[0] << "\t" << statevect[i].optqr << "\t" << statevect[i].optcost << "\t" << statevect[i].gammacost << endl;
-	}
+	}*/
 	//outputfile.close();
 	timeindex--;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	int control;
 	//NEXT PERIOD
 	unsigned long long endindex;
-	while (convergence_counter < 10)
+	while (timeindex >= 1)
 	{
 
 		time(&rawtime);
@@ -742,13 +692,16 @@ int main(int argc, char* argv[])
 			statevectnextper[i].mvect[1] = mvect[1];
 			statevectnextper[i].optqpvect[0] = optqvect[0];
 
+			
 			//std::cout << "Period " << timeindex << " State Index: " << i << "jj = " << jj << ": State= (" << yvect[0] << " " << yvect[1] << " " << yvect[2] << " " << yvect[3] << " || " << mvect[0] << " " << mvect[1] << ") " << " qr=" << optqr << " Cost=" << opttotcost << endl;
 
 		}
+		thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex + 1, statevect);
+		writetoDBthread.join();
 		//cin >> c;
 
-		thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex[horizon + 1], timeindex + 1, statevect);
-		writetoDBthread.join();
+		//thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex , statevect);
+		//writetoDBthread.join();
 
 		//std::cout << "Period " << timeindex << " is complete! Writing Starts!" << endl;
 		// outputfile.open("output.txt", std::ofstream::out | std::ofstream::app);
@@ -762,7 +715,7 @@ int main(int argc, char* argv[])
 		for (i = 0; i < initialstateindex[timeindex - 1] - endindex; i++)
 		{
 			px = i;
-			j = calculateindex_lt(timeindex + 1, statevectnextper[i].yvect, statevectnextper[i].mvect, LT, v, N, maxDmax);
+			/*j = calculateindex_lt(timeindex + 1, statevectnextper[i].yvect, statevectnextper[i].mvect, LT, v, N, maxDmax);
 			oklit_distance += pow(statevect[j].optqr - statevectnextper[i].optqr, 2);
 
 			//|| statevect[i].yvect[2] != statevectnextper[j].yvect[2] || statevect[i].yvect[3] != statevectnextper[j].yvect[3] || statevect[i].mvect[0] != statevectnextper[j].mvect[0] || statevect[i].mvect[1] != statevectnextper[j].mvect[1])
@@ -775,7 +728,7 @@ int main(int argc, char* argv[])
 
 				cin >> c;
 
-			}
+			}*/
 			statevect[i].optqr = statevectnextper[i].optqr;
 			statevect[i].optcost = statevectnextper[i].optcost;
 			statevect[i].per = statevectnextper[i].per;
@@ -788,29 +741,29 @@ int main(int argc, char* argv[])
 			statevect[i].mvect[0] = statevectnextper[i].mvect[0];
 			statevect[i].mvect[1] = statevectnextper[i].mvect[1];
 
-
+			
 			//if (timeindex == 100)
 			//cin >> c;
 
-			calculatestatespace_lt(px, timeindex, maxDmax, LT, v, N, yvect, mvect);
+			//calculatestatespace_lt(px, timeindex, maxDmax, LT, v, N, yvect, mvect);
 
-			mvect[0] = N; totprintedparts = 0;
+			//mvect[0] = N; totprintedparts = 0;
 			//if (yvect[0] + yvect[1] + yvect[2] + yvect[3] > maxyupperbound)
 				//continue;
-			for (j = 1; j <= v; j++)
-				totprintedparts += mvect[j];
+			//for (j = 1; j <= v; j++)
+			//	totprintedparts += mvect[j];
 
-			if (totprintedparts > N)
+			//if (totprintedparts > N)
 				//continue;
-				cin >> c;
+				//cin >> c;
 
-			mvect[0] -= totprintedparts;
+			//mvect[0] -= totprintedparts;
 
 			//outputfile << setprecision(30) << statevect[i].per << "\t" << statevect[i].yvect[0] << "\t" << statevect[i].yvect[1] << "\t" << statevect[i].yvect[2] << "\t" << statevect[i].yvect[3] << "\t" << statevect[i].mvect[0] << "\t" << statevect[i].mvect[1] << "\t" << statevect[i].optqpvect[0] << "\t" << statevect[i].optqr << "\t" << statevect[i].optcost << "\t" << statevect[i].gammacost << endl;
 
 		}
 		// outputfile.close();
-		cout << "oklit_distance" << " " << oklit_distance << " " << "timeindex" << " " << timeindex << endl;
+		/*cout << "oklit_distance" << " " << oklit_distance << " " << "timeindex" << " " << timeindex << endl;
 		if (timeindex > horizon - 30)
 		{
 			oklit_distance = 100; convergence_counter = 0;
@@ -820,11 +773,13 @@ int main(int argc, char* argv[])
 		if ((timeindex <= horizon - 30) && (oklit_distance != 0))
 			convergence_counter = 0;
 
-		control = timeindex;
+		control = timeindex;*/
 		timeindex--;
 
 	}
-	if (control == 1)
+	thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex + 1, statevect);
+	writetoDBthread.join();
+	/*if (control == 1)
 		endindex = 0;
 	if (control > 1)
 		endindex = initialstateindex[control - 2];
@@ -833,7 +788,7 @@ int main(int argc, char* argv[])
 
 		outputfile << setprecision(8) << statevect[i].per << "\t" << statevect[i].yvect[0] << "\t" << statevect[i].yvect[1] << "\t" << statevect[i].yvect[2] << "\t" << statevect[i].yvect[3] << "\t" << statevect[i].mvect[0] << "\t" << statevect[i].mvect[1] << "\t" << statevect[i].optqpvect[0] << "\t" << statevect[i].optqr << "\t" << statevect[i].optcost << "\t" << statevect[i].gammacost << endl;
 	}
-
+	*/
 
 
 	outputfile.close();
@@ -1217,12 +1172,12 @@ void readparams(int ind, int& param1, int& param2, double& param3, double& param
 
 
 
-void static writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[horizon + 1], int timeindex, states* statevect) {
+void writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[], int timeindex, states* statevect) {
 
 	// For binding
 	sqlite3_stmt* res;
 	const char* tail;
-
+	int endindex;
 	//SQLITE BIND START
 	if (sqlite3_open("database.db", &db) == SQLITE_OK)
 	{
@@ -1234,7 +1189,12 @@ void static writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initia
 
 
 		// FOR THE LAST PERIOD
-		for (int i = 0; i < initialstateindex[timeindex - 1] - initialstateindex[timeindex - 2]; i++) {
+		if (timeindex == 1)
+			endindex = 0;
+		if (timeindex > 1)
+			endindex = initialstateindex[timeindex - 2];
+
+		for (int i = 0; i < initialstateindex[timeindex - 1] - endindex; i++) {
 
 			if (rc == SQLITE_OK)
 			{
@@ -1270,13 +1230,13 @@ void static writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initia
 	sqlite3_close(db);
 }
 
-// Programý çalýþtýr: Ctrl + F5 veya Hata Ayýkla > Hata Ayýklamadan Baþlat menüsü
-// Programda hata ayýkla: F5 veya Hata Ayýkla > Hata Ayýklamayý Baþlat menüsü
+// Programï¿½ ï¿½alï¿½ï¿½tï¿½r: Ctrl + F5 veya Hata Ayï¿½kla > Hata Ayï¿½klamadan Baï¿½lat menï¿½sï¿½
+// Programda hata ayï¿½kla: F5 veya Hata Ayï¿½kla > Hata Ayï¿½klamayï¿½ Baï¿½lat menï¿½sï¿½
 
-// Kullanmaya Baþlama Ýpuçlarý:
-//   1. Dosyalarý eklemek/yönetmek için Çözüm Gezgini penceresini kullanýn
-//   2. Kaynak denetimine baðlanmak için Takým Gezgini penceresini kullanýn
-//   3. Derleme çýktýsýný ve diðer iletileri görmek için Çýktý penceresini kullanýn
-//   4. Hatalarý görüntülemek için Hata Listesi penceresini kullanýn
-//   5. Yeni kod dosyalarý oluþturmak için Projeye Git > Yeni Öðe ekle veya varolan kod dosyalarýný projeye eklemek için Proje > Var Olan Öðeyi Ekle adýmlarýný izleyin
-//   6. Bu projeyi daha sonra yeniden açmak için Dosya > Aç > Proje'ye gidip .sln uzantýlý dosyayý seçin
+// Kullanmaya Baï¿½lama ï¿½puï¿½larï¿½:
+//   1. Dosyalarï¿½ eklemek/yï¿½netmek iï¿½in ï¿½ï¿½zï¿½m Gezgini penceresini kullanï¿½n
+//   2. Kaynak denetimine baï¿½lanmak iï¿½in Takï¿½m Gezgini penceresini kullanï¿½n
+//   3. Derleme ï¿½ï¿½ktï¿½sï¿½nï¿½ ve diï¿½er iletileri gï¿½rmek iï¿½in ï¿½ï¿½ktï¿½ penceresini kullanï¿½n
+//   4. Hatalarï¿½ gï¿½rï¿½ntï¿½lemek iï¿½in Hata Listesi penceresini kullanï¿½n
+//   5. Yeni kod dosyalarï¿½ oluï¿½turmak iï¿½in Projeye Git > Yeni ï¿½ï¿½e ekle veya varolan kod dosyalarï¿½nï¿½ projeye eklemek iï¿½in Proje > Var Olan ï¿½ï¿½eyi Ekle adï¿½mlarï¿½nï¿½ izleyin
+//   6. Bu projeyi daha sonra yeniden aï¿½mak iï¿½in Dosya > Aï¿½ > Proje'ye gidip .sln uzantï¿½lï¿½ dosyayï¿½ seï¿½in
