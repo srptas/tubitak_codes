@@ -25,10 +25,16 @@
 #include "C:\Users\khas\source\repos\boncuk.h"
 // V=4, Revised Melisa Tu�cu - 18.11.2022
 
-// REVISED WITH SQLITE AND MULTITHREADING - Serap Ta�
+// REVISED WITH SQLITE AND MULTITHREADING - Serap Tas
 #include <sqlite3.h>
+//FOR CPU AND WALL CLOCK
+#include <iomanip>
+#include <chrono>
+#include <ctime>
+
 
 using namespace std;
+
 int calculatestatespace_lt(unsigned long long i, int timeindex, int maxDmax, int lt, int v, int N, int yvect[], int mvect[]);
 int calculateindex_lt(int timeindex, int yvect[], int mvect[], int lt, int v, int N, int maxDmax);
 int calculateinitialstate(int horizon, int maxDmax, int lt, int N, unsigned long long initialstateindex[]);
@@ -118,6 +124,9 @@ return 0;
 int letter2ind(string letters);
 void readparams(int ind, int& param1, int& param2, double& param3, double& param4, double& param5);
 
+
+//CPU TIME CALC. FUNCTION
+void f();
 void writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[], int timeindex, states* statevect);
 
 //SQLITE
@@ -137,6 +146,19 @@ int callback(void* NotUsed, int argc, char** argv, char** azColName) {
 int main(int argc, char* argv[])
 //int main()
 {
+	//TIME IN SECONDS
+	clock_t tStart = clock(); //for the elapsed time
+
+	//CPU TIME AND WALL CLOCK CALCULATION START
+	std::clock_t c_start = std::clock();
+	auto t_start = std::chrono::high_resolution_clock::now();
+	thread t1(f);
+	thread t2(f); // f() is called on two threads
+	t1.join();
+	t2.join();
+	//
+	
+
 	// SQLITE INITIALIZE START
 	// Pointer to SQLite connection
 	sqlite3* db;
@@ -334,7 +356,7 @@ int main(int argc, char* argv[])
 
 	
 
-	ofstream outputfile, outputsub, resultfile, logfile, resultfile0, errorfile;
+	ofstream outputfile, outputsub, resultfile, logfile, resultfile0, errorfile, timefile;
 	// logfile.open("Logfile.txt", std::ofstream::out | std::ofstream::app);
 	// logfile << "Program Starts! Parameter Index: " << indexx << " TimeStamp: " << asctime(timeinfo);
 	// outputfile.open(filename1);
@@ -800,9 +822,30 @@ int main(int argc, char* argv[])
 
 	delete[] statevect;
 	delete[] statevectnextper;
+
+	// CPU TIME AND WALL CLOCK CALCULATION END
+	clock_t c_end = clock();
+
+	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC); //elapsed time
+
+
+	auto t_end = chrono::high_resolution_clock::now();
+
+	cout << fixed << setprecision(2) << "CPU time used: "
+		<< 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC << " ms\n"
+		<< "Wall clock time passed: "
+		<< chrono::duration<double, std::milli>(t_end - t_start).count()
+		<< " ms\n";
+
+	double cpu_time = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
+	double elapsed_time = chrono::duration<double, std::milli>(t_end - t_start).count();
+
+	// WRITE TIME INFO TO THE TIMEFILE RESPECT TO PARAMS
+	timefile.open("timefile.txt", std::ofstream::out | std::ofstream::app);
+	timefile << "Parameters: Indexx: " << indexx << " Horizon: " << horizon << " HoldingRate : " << holdrate << " BacklogRate : " << backlograte << " SubstitutionRate : " << substitutionrate << " xivect = (" << xivect[0] << ")" << " Times : CPU Time : " << cpu_time << "ms" << " Elapsed Time : " << elapsed_time << "ms\n";
+	timefile.close();
+
 	return 0;
-
-
 
 }
 
@@ -1170,6 +1213,16 @@ void readparams(int ind, int& param1, int& param2, double& param3, double& param
 }
 
 
+//CPU TIME CALC. FUNCTION
+void f()
+{
+	volatile double d = 0;
+	for (int n = 0; n < 10000; ++n)
+		for (int m = 0; m < 10000; ++m) {
+			double diff = d * n * m;
+			d = diff + d;
+		}
+}
 
 
 void writetoDB(sqlite3* db, int rc, int indexx, unsigned long long initialstateindex[], int timeindex, states* statevect) {
