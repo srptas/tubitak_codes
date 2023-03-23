@@ -30,7 +30,7 @@
 #include <iomanip>
 #include <chrono>
 #include <ctime>
-#include <thread>
+
 
 
 
@@ -787,7 +787,6 @@ int main(int argc, char* argv[])
 
 
 		thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex+1, statevect);
-		// join initialstateindex[timeindex - 2]
 		writetoDBthread.join();
 
 		if (timeindex == 1)
@@ -868,18 +867,6 @@ int main(int argc, char* argv[])
 		}
 		*/
 
-
-		/*
-		if (timeindex < horizon)
-		{
-			std::cout << "Waiting for previous period's database thread" << std::endl;
-			threads.at(timeindex).join();
-		}
-		*/
-		//threads.at(timeindex - 1) = std::thread(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
-		//thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, yvect, mvect, totprintedparts, statevect);
-		
-		//thread writelastperiod(writetoDB, indexx, initialstateindex, timeindex, maxDmax, statevect);
 		
 
 		timeindex--;
@@ -887,10 +874,7 @@ int main(int argc, char* argv[])
 	thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex + 1, statevect);
 	writetoDBthread.join();
 
-	//threads.at(0).join();
-	//writelastperiod.join();
-
-
+	
 	// Close SQLITE connection
 	//sqlite3_close(db);
 
@@ -912,6 +896,7 @@ int main(int argc, char* argv[])
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC); //elapsed time
 
 
+
 	auto t_end = chrono::high_resolution_clock::now();
 
 	cout << fixed << setprecision(2) << "CPU time used: "
@@ -919,6 +904,7 @@ int main(int argc, char* argv[])
 		<< "Wall clock time passed: "
 		<< chrono::duration<double, std::milli>(t_end - t_start).count()
 		<< " ms\n";
+
 
 	double cpu_time = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
 	double elapsed_time = chrono::duration<double, std::milli>(t_end - t_start).count();
