@@ -722,8 +722,6 @@ int main(int argc, char* argv[])
 		writetoDBthread.join();
 		//cin >> c;
 
-		//thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex , statevect);
-		//writetoDBthread.join();
 
 		//std::cout << "Period " << timeindex << " is complete! Writing Starts!" << endl;
 		// outputfile.open("output.txt", std::ofstream::out | std::ofstream::app);
@@ -801,6 +799,7 @@ int main(int argc, char* argv[])
 	}
 	thread writetoDBthread(writetoDB, db, rc, indexx, initialstateindex, timeindex + 1, statevect);
 	writetoDBthread.join();
+
 	/*if (control == 1)
 		endindex = 0;
 	if (control > 1)
