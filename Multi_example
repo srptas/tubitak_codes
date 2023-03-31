@@ -1,0 +1,35 @@
+
+#include <iostream>
+#include <fstream>
+#include <thread>
+
+void sum_of_numbers(int start, int end, std::string filename) {
+    int sum = 0;
+    for (int i = start; i <= end; i++) {
+        sum += i;
+    }
+
+    std::ofstream outfile;
+    outfile.open(filename, std::ios::app);
+    outfile << "Sum of numbers from " << start << " to " << end << ": " << sum << std::endl;
+    outfile.close();
+
+    std::cout << "Sum of numbers from " << start << " to " << end << ": " << sum << std::endl;
+}
+
+
+int main() {
+    std::thread first(sum_of_numbers, 1, 50, "sum_of_numbers.txt");
+    std::thread second(sum_of_numbers, 51, 100, "sum_of_numbers.txt");
+
+    std::cout << "Running both threads..." << std::endl;
+
+
+    // The join method is called in the main thread to wait for the worker thread to complete before the main thread terminates.
+    first.join();
+    second.join();
+
+    std::cout << "Both threads have finished." << std::endl;
+
+    return 0;
+}
