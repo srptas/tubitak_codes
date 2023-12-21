@@ -1,1 +1,1 @@
-
+This folder includes the C++ files that I did during my Tubitak project internship. They include Creating a Database with SQLite to save the data to the database instead of a text file, Implementing Multithreading to the project (for calculating and writing the results simultaneously), and Developing software for importing data from the existing text files to the Database.
