@@ -2,6 +2,8 @@
 // text_sqlite.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+@AUTHOR Serap
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
